@@ -204,7 +204,7 @@ test_output = nil
 test_expanded = nil
 if isDebug then 
     test_input = torch.CudaTensor(5, 3, 224, 224):uniform(-1, 1)
-    -- test_output will be: 5 * 512 * 14 * 14
+    -- test_output will be: 5 * 512 * 196
     test_output = protos.cnn:forward(test_input)
     test_expended = protos.expander:forward(test_output)
 end 
