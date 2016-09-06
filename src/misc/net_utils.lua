@@ -261,18 +261,36 @@ function net_utils.listModules(net)
   return moduleList
 end
 
+-- allow nested nn.gModule(depth = 2, ie, nn.gModule in nn.gModule)
 function net_utils.sanitize_gradients(net)
   local moduleList = net_utils.listModules(net)
   for k,m in ipairs(moduleList) do
-    if m.weight and m.gradWeight then
-      --print('sanitizing gradWeight in of size ' .. m.gradWeight:nElement())
-      --print(m.weight:size())
-      m.gradWeight = nil
-    end
-    if m.bias and m.gradBias then
-      --print('sanitizing gradWeight in of size ' .. m.gradBias:nElement())
-      --print(m.bias:size())
-      m.gradBias = nil
+    -- allow two level  nn.gModule
+    if torch.type(m) == 'nn.gModule' then 
+        local nested_moduleList = net_utils.listModules(m)
+        for nested_k, nested_m in ipairs(nested_moduleList) do 
+            if nested_m.weight and nested_m.gradWeight then
+                --print('sanitizing gradWeight in of size ' .. nested_m.gradWeight:nElement())
+                --print(nested_m.weight:size())
+                nested_m.gradWeight = nil
+            end
+            if nested_m.bias and nested_m.gradBias then
+                --print('sanitizing gradWeight in of size ' .. nested_m.gradBias:nElement())
+                --print(nested_m.bias:size())
+                nested_m.gradBias = nil
+            end
+        end 
+    else  -- not nn.gModule
+        if m.weight and m.gradWeight then
+            --print('sanitizing gradWeight in of size ' .. m.gradWeight:nElement())
+            --print(m.weight:size())
+            m.gradWeight = nil
+        end
+        if m.bias and m.gradBias then
+            --print('sanitizing gradWeight in of size ' .. m.gradBias:nElement())
+            --print(m.bias:size())
+            m.gradBias = nil
+        end
     end
   end
 end
@@ -280,18 +298,35 @@ end
 function net_utils.unsanitize_gradients(net)
   local moduleList = net_utils.listModules(net)
   for k,m in ipairs(moduleList) do
-    if m.weight and (not m.gradWeight) then
-      m.gradWeight = m.weight:clone():zero()
-      --print('unsanitized gradWeight in of size ' .. m.gradWeight:nElement())
-      --print(m.weight:size())
-    end
-    if m.bias and (not m.gradBias) then
-      m.gradBias = m.bias:clone():zero()
-      --print('unsanitized gradWeight in of size ' .. m.gradBias:nElement())
-      --print(m.bias:size())
+    if torch.type(m) == 'nn.gModule' then
+        local nested_moduleList = net_utils.listModules(m) 
+        for nested_k, nested_m in ipairs(nested_moduleList) do  
+            if nested_m.weight and (not nested_m.gradWeight) then
+                nested_m.gradWeight = nested_m.weight:clone():zero()
+                --print('unsanitized gradWeight in of size ' .. nested_m.gradWeight:nElement())
+                --print(nested_m.weight:size())
+            end
+            if nested_m.bias and (not nested_m.gradBias) then
+                nested_m.gradBias = nested_m.bias:clone():zero()
+                --print('unsanitized gradWeight in of size ' .. nested_m.gradBias:nElement())
+                --print(nested_m.bias:size())
+            end   
+        end 
+    else 
+        if m.weight and (not m.gradWeight) then
+            m.gradWeight = m.weight:clone():zero()
+            --print('unsanitized gradWeight in of size ' .. m.gradWeight:nElement())
+            --print(m.weight:size())
+        end
+        if m.bias and (not m.gradBias) then
+            m.gradBias = m.bias:clone():zero()
+            --print('unsanitized gradWeight in of size ' .. m.gradBias:nElement())
+            --print(m.bias:size())
+        end
     end
   end
 end
+
 
 --[[
 take a LongTensor of size DxN with elements 1..vocab_size+1 
