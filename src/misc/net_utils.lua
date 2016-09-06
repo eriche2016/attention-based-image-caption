@@ -8,7 +8,7 @@ local net_utils = {}
 function net_utils.build_cnn_v1(cnn, opt)
   local layer_num = utils.getopt(opt, 'layer_num', 38) 
   local backend = utils.getopt(opt, 'backend', 'cudnn')
-  local encoding_size = utils.getopt(opt, 'image_encoding_size', 128)
+  local encoding_size = utils.getopt(opt, 'encoding_size', 128)
   
   if backend == 'cudnn' then
     require 'cudnn'
