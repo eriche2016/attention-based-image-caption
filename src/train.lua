@@ -170,6 +170,7 @@ else
   lmOpt.word_encoding_size = opt.word_encoding_size
   lmOpt.image_encoding_size = opt.image_encoding_size
   lmOpt.rnn_size = opt.rnn_size
+  lmOpt.attention_size = opt.attention_size
   lmOpt.num_layers = 1
   lmOpt.dropout = opt.drop_prob_lm
   lmOpt.seq_length = loader:getSeqLength()
